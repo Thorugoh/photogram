@@ -12,6 +12,7 @@
     <name>consoleApp</name>
 
     <properties>
+        <aws.sdk.kotlin.version>1.0.0</aws.sdk.kotlin.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <kotlin.code.style>official</kotlin.code.style>
         <kotlin.compiler.jvmTarget>11</kotlin.compiler.jvmTarget>
@@ -67,8 +68,14 @@
             </plugin>
         </plugins>
     </build>
-
     <dependencies>
+        <!-- https://mvnrepository.com/artifact/aws.sdk.kotlin/s3 -->
+        <dependency>
+            <groupId>aws.sdk.kotlin</groupId>
+            <artifactId>s3-jvm</artifactId>
+            <version>${aws.sdk.kotlin.version}</version>
+        </dependency>
+
         <dependency>
             <groupId>org.jetbrains.kotlin</groupId>
             <artifactId>kotlin-test-junit5</artifactId>
@@ -102,6 +109,7 @@
             <version>8.0.33</version>
             <scope>runtime</scope>
         </dependency>
+
     </dependencies>
 
 </project>

@@ -6,6 +6,7 @@ import io.ktor.server.routing.*
 
 fun Route.getPostRoute() {
     get("/posts") {
+
         call.respondText("Posts")
     }
 }
