@@ -1,60 +1,53 @@
 package utils
 
 import aws.sdk.kotlin.services.s3.*
-import aws.sdk.kotlin.services.s3.model.BucketLocationConstraint
-import aws.sdk.kotlin.services.s3.model.GetObjectAclRequest
-import aws.smithy.kotlin.runtime.content.ByteStream
+import aws.sdk.kotlin.services.s3.model.GetObjectRequest
+import aws.sdk.kotlin.services.s3.model.PutObjectRequest
+import aws.smithy.kotlin.runtime.content.asByteStream
+import aws.smithy.kotlin.runtime.content.writeToFile
 import kotlinx.coroutines.runBlocking
+import java.io.File
 import java.util.UUID
 
 val REGION = "us-east-2"
 val BUCKET = "poc-photogram"
-val KEY = "key"
+class S3 {
+    suspend fun uploadFile(objectPath: String) = runBlocking {
+        val metadataVal = mutableMapOf<String, String>()
+        metadataVal["myVal"] = "test"
 
-fun main() = runBlocking {
-    S3Client
-        .fromEnvironment { region = REGION }
-        .use { s3 ->
-            setup(s3)
+        val request = PutObjectRequest {
+            bucket = BUCKET
+            key = "${UUID.randomUUID()}.jpg"
+            metadata = metadataVal
+            body = File(objectPath).asByteStream()
+        }
 
-            println("Creating object $BUCKET/$KEY...")
+        S3Client { region = REGION }.use { s3 ->
+            val response = s3.putObject(request)
+            println("Tag information is ${response.eTag}")
+        }
+    }
 
-            s3.putObject {
-                bucket = BUCKET
-                key = KEY
-                body = ByteStream.fromString("Testing with the Kotlin SDK")
+    suspend fun downloadFileFromS3(filename: String, path: String){
+        val request = GetObjectRequest {
+            key=filename
+            bucket=BUCKET
+        }
+
+        S3Client { region = REGION }.use {s3 ->
+            s3.getObject(request) {resp ->
+                val myFile = File(path)
+                if(myFile.createNewFile()){
+                    resp.body?.writeToFile(myFile)
+                    println("Read $filename from $BUCKET")
+                }
             }
 
-            println("Object $BUCKET/$KEY created successfully!")
-
-//            cleanUp(s3)
-        }
-}
-
-
-//fun downloadFileFromS3(s3: S3Client, filenName: String){
-//    s3.getObject(GetObjectAclRequest(BUCKET, filenName)
-//
-//}
-suspend fun setup(s3: S3Client){
-    println("Creating bucket $BUCKET")
-    s3.createBucket {
-        createBucketConfiguration {
-            locationConstraint = BucketLocationConstraint.fromValue(REGION)
         }
     }
-    println("Bucket $BUCKET created for region $REGION")
 }
 
-suspend fun cleanUp(s3: S3Client){
-    println("Deleting object $BUCKET/$KEY")
-    s3.deleteObject() {
-        bucket = BUCKET
-        key = KEY
-    }
-    println("Object $BUCKET/$KEY deleted successfully")
-    s3.deleteBucket {
-        bucket = BUCKET
-    }
-    println("Bucket $BUCKET deleted successfully")
+suspend fun main () {
+    S3().uploadFile("/Users/vhugo/photogram-downloads/tree.jpg")
 }
