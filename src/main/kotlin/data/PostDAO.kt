@@ -1,29 +1,33 @@
 package data
 
+import model.Post
 import model.User
 import utils.DatabaseConnection
 import java.sql.PreparedStatement
 import java.sql.SQLException
+import java.util.Date
 
-class UserDAO {
-    private val connection = DatabaseConnection.getConnection()
+class PostDAO {
 
-    fun insertUser(user: User){
-        val insertSQL = "INSERT INTO users (name, username, email, id) VALUES (?, ?, ?, ?)"
+    val connection = DatabaseConnection.getConnection()
+
+    fun insertPost(userId: String, post: Post){
+        val insertSQL = "INSERT INTO posts (id, image_url, description, user_id) VALUES (?, ?, ?, ?)"
         var preparedStatement: PreparedStatement? = null
 
         try {
             if(connection != null) {
                 preparedStatement = connection.prepareStatement(insertSQL)
-                preparedStatement.setString(1, user.name)
-                preparedStatement.setString(2, user.username)
-                preparedStatement.setString(3, user.email)
-                preparedStatement.setString(4, user.id)
+                preparedStatement.setString(1, post.id)
+                preparedStatement.setString(2, post.imageUrl)
+                preparedStatement.setString(3, post.description)
+                preparedStatement.setString(4, userId)
+
                 preparedStatement.executeUpdate()
 
-                println("User inserted successfully!")
+                println("Post created successfully!")
             }else {
-                println("Failed to insert user")
+                println("Failed to create post")
             }
         }catch (e: SQLException) {
             e.printStackTrace()
@@ -34,11 +38,13 @@ class UserDAO {
 
     }
 
-    fun getUserById(id: String): User? {
-        val selectSQL = ("SELECT * FROM users WHERE id = ?")
+    fun getAllByUser(userId: String): User? {
+        val connection = DatabaseConnection.getConnection()
+
+        val selectSQL = ("SELECT * FROM posts WHERE user_id = ?")
         if(connection != null) {
             val preparedStatement = connection.prepareStatement(selectSQL)
-            preparedStatement.setString(1, id);
+            preparedStatement.setString(1, userId);
             try {
                 val resultSet = preparedStatement.executeQuery()
                 if(resultSet.next()) {
@@ -59,5 +65,5 @@ class UserDAO {
 }
 
 fun main(){
-    println(UserDAO().getUserById("ce9bc80f-7c1f-49c6-b89a-9003e0dbedfc"))
+    println(PostDAO().insertPost("ce9bc80f-7c1f-49c6-b89a-9003e0dbedfc", Post("id-0", "url", "desc", Date())))
 }
