@@ -1,13 +1,13 @@
+package org.example
 
-import io.ktor.server.engine.*
-import io.ktor.server.netty.*
+import io.ktor.server.application.*
 import io.ktor.server.routing.*
 import routes.getPostRoute
 
-fun main() {
-    embeddedServer(Netty, port = 8080) {
-        routing {
-            getPostRoute()
-        }
-    }.start(wait = true)
+fun main(args: Array<String>): Unit = io.ktor.server.netty.EngineMain.main(args)
+
+fun Application.module() {
+    routing {
+        getPostRoute()
+    }
 }

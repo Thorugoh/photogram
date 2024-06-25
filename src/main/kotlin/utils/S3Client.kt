@@ -15,9 +15,6 @@ val REGION = "us-east-2"
 val BUCKET = "poc-photogram"
 val profileName = "user1"
 
-
-
-
 class S3 {
     suspend fun uploadFile(objectPath: String) = runBlocking {
         val metadataVal = mutableMapOf<String, String>()
@@ -37,7 +34,6 @@ class S3 {
             metadata = metadataVal
             body = fileBytes
         }
-
 
         S3Client { region = REGION
             credentialsProvider = ProfileCredentialsProvider(profileName)

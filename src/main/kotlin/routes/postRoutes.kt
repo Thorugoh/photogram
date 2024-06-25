@@ -1,7 +1,10 @@
 package routes
 
 import aws.smithy.kotlin.runtime.content.asByteStream
+import com.auth0.jwt.JWT
+import com.auth0.jwt.algorithms.Algorithm
 import data.PostDAO
+import data.UserDAO
 import io.ktor.http.*
 import io.ktor.http.content.*
 import io.ktor.server.application.*
@@ -9,16 +12,67 @@ import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import model.Post
-import utils.DatabaseConnection
+import model.User
+import org.example.utils.generateHash
+import org.example.utils.generateRandomSalt
 import utils.S3
 import java.io.File
 import java.util.Date
 import java.util.UUID
 
+
+
 fun Route.getPostRoute() {
+    post("/login") {
+        val user = call.receiveParameters()
+        if(user["username"] == null || user["password"] == null) {
+            call.respond(HttpStatusCode.BadRequest, "Missing username or password")
+            return@post
+        }
+
+
+        val dbUser = UserDAO().getUserByUsername(user["username"]!!)
+        if(dbUser?.salt == null || dbUser.password == null || user["password"] == null) {
+            call.respond(HttpStatusCode.BadRequest, "Incorrect credentials")
+            return@post
+        }
+
+        val hashedRequest = generateHash(user["password"]!!, dbUser.salt)
+
+        if(hashedRequest != dbUser.password) {
+            call.respond(HttpStatusCode.BadRequest, "Incorrect credentials")
+            return@post
+        }
+
+        val token = JWT.create()
+            .withClaim("username", user["username"])
+            .sign(Algorithm.HMAC256("secret"))
+
+        call.respondText(token)
+    }
+
+    post("/signup") {
+        val user = call.receiveParameters()
+        if(user["username"] == null || user["password"] == null) {
+            call.respond(HttpStatusCode.BadRequest, "Missing username or password")
+            return@post
+        }
+        val salt = generateRandomSalt().toString()
+        val hashed = generateHash(user["password"]!!, salt)
+
+        UserDAO().insertUser(
+            User(UUID.randomUUID().toString(), user["name"]!!, user["username"]!!, user["email"]!!, null, null),
+            salt,
+            hashed,
+        )
+
+        call.respond(HttpStatusCode.OK)
+    }
+
     get("/posts") {
         call.respondText("Posts")
     }
+
     post("/upload") {
         val multipartData = call.receiveMultipart()
         var description: String? = null

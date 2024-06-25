@@ -52,7 +52,9 @@ class PostDAO {
                         resultSet.getString("id"),
                         resultSet.getString("name"),
                         resultSet.getString("username"),
-                        resultSet.getString("email")
+                        resultSet.getString("email"),
+                        null,
+                        null
                     )
                 }
             }catch (e: SQLException) {
